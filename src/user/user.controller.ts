@@ -16,12 +16,12 @@ import { StatusCodes } from 'http-status-codes';
 export class UserController {
   constructor(private readonly userService: UserService) {}
   @Get()
-  findAll() {
+  getAll() {
     return this.userService.getAllUsers();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  getById(@Param('id') id: string) {
     return this.userService.getUserById(id);
   }
 

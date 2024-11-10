@@ -29,20 +29,20 @@ export class ArtistService {
   }
 
   getAllArtists(): ArtistDto[] {
-    return this.artists; // вывести без пароля
+    return this.artists;
   }
 
   getArtistById(searchId: string): ArtistDto | undefined {
-    // проверка на валидность id пользователя
+    // проверка на валидность id артиста
     if (!validate(searchId))
       throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
 
-    // поиск пользователя
+    // поиск артиста
     const artist = this.artists.find((i) => i.id === searchId);
     if (!artist)
       throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
 
-    return artist; // без пароля
+    return artist;
   }
 
   updateArtist(searchId: string, newArtistData: CreateArtistDto): ArtistDto {
@@ -50,7 +50,7 @@ export class ArtistService {
     if (Object.keys(newArtistData).length == 0)
       throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
 
-    // проверка на валидность id пользователя
+    // проверка на валидность id артиста
     if (!validate(searchId))
       throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
 
@@ -73,11 +73,11 @@ export class ArtistService {
   }
 
   deleteArtist(searchId: string): ArtistDto {
-    // проверка на валидность id пользователя
+    // проверка на валидность id артиста
     if (!validate(searchId))
       throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
 
-    // поиск пользователя
+    // поиск артиста
     const deletedArtist = this.artists.find((i) => i.id === searchId);
     const indexArtist = this.artists.findIndex((i) => i.id === searchId);
     if (indexArtist === -1)

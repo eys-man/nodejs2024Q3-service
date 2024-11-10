@@ -16,23 +16,23 @@ import { StatusCodes } from 'http-status-codes';
 export class ArtistController {
   constructor(private readonly artistService: ArtistService) {}
   @Get()
-  findAll() {
+  getAll() {
     return this.artistService.getAllArtists();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  getById(@Param('id') id: string) {
     return this.artistService.getArtistById(id);
   }
 
   @Post()
-  create(@Body() createUserDto: CreateArtistDto) {
-    return this.artistService.createArtist(createUserDto);
+  create(@Body() createArtistDto: CreateArtistDto) {
+    return this.artistService.createArtist(createArtistDto);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: CreateArtistDto) {
-    return this.artistService.updateArtist(id, updateUserDto);
+  update(@Param('id') id: string, @Body() updateArtistDto: CreateArtistDto) {
+    return this.artistService.updateArtist(id, updateArtistDto);
   }
 
   @Delete(':id')
