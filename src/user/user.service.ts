@@ -1,68 +1,139 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   CreateUserDto,
   PartialUserDto,
   UpdatePasswordDto,
   UserDto,
-} from './dto/user.dto';
-import { v4 } from 'uuid';
+} from './dto/users.dto';
+import { DatabaseService } from '../db/db.service';
+import { v4, validate } from 'uuid';
 
 @Injectable()
 export class UserService {
-  private readonly users: UserDto[] = [];
+  // private readonly users: UserDto[] = [];
+  private users = this.databaseService.getUsers();
 
-  createUser(user: CreateUserDto): PartialUserDto {
-    const newUser: UserDto = {
+  constructor(private readonly databaseService: DatabaseService) {}
+
+  createUser(newUser: CreateUserDto): PartialUserDto {
+    if (
+      typeof newUser.login !== 'string' ||
+      typeof newUser.password !== 'string'
+    )
+      throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
+
+    const user: UserDto = {
       id: v4(),
-      login: user.login,
-      password: user.password,
+      login: newUser.login,
+      password: newUser.password,
       version: 1,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
-    this.users.push(newUser);
-    const partialUser: PartialUserDto = { ...newUser };
-    console.log(`create user: ${partialUser}`);
+    this.users.push(user);
+
+    const partialUser = {
+      id: user.id,
+      login: user.login,
+      version: 1,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
 
     return partialUser; // без пароля
   }
 
-  getAllUsers(): CreateUserDto[] {
-    return this.users;
+  getAllUsers(): PartialUserDto[] {
+    const partialUsers: PartialUserDto[] = [];
+    this.users.forEach((i) => {
+      partialUsers.push({
+        id: i.id,
+        login: i.login,
+        version: i.version,
+        createdAt: i.createdAt,
+        updatedAt: i.updatedAt,
+      });
+    });
+    return partialUsers; // вывести без пароля
   }
 
   getUserById(searchId: string): PartialUserDto | undefined {
-    const user = this.users.find((i) => i.id === searchId);
+    // проверка на валидность id пользователя
+    if (!validate(searchId))
+      throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
-    const partialUser: PartialUserDto = { ...user };
-    console.log(`getUserById user: ${partialUser}`);
+    // поиск пользователя
+    const user = this.users.find((i) => i.id === searchId);
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    const partialUser: PartialUserDto = {
+      id: user.id,
+      login: user.login,
+      version: user.version,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
 
     return partialUser; // без пароля
   }
 
-  updateUser(newPassword: UpdatePasswordDto): PartialUserDto {
-    const user: UserDto = this.users.find(
-      (i) => i.password === newPassword.oldPassword,
-    );
+  updateUser(searchId: string, newPassword: UpdatePasswordDto): PartialUserDto {
+    // проверка на пустой dto
+    if (Object.keys(newPassword).length == 0)
+      throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
 
-    if (!user) return undefined;
+    // проверка на валидность id пользователя
+    if (!validate(searchId))
+      throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск пользователя
+    const user = this.users.find((i) => i.id === searchId);
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    // сравнение паролей
+    if (user.password !== newPassword.oldPassword)
+      throw new HttpException(
+        'The password being replaced is incorrect',
+        HttpStatus.FORBIDDEN,
+      );
 
     user.password = newPassword.newPassword;
     user.updatedAt = Date.now();
     user.version++;
 
-    const partialUser: PartialUserDto = { ...user };
+    const partialUser: PartialUserDto = {
+      id: user.id,
+      login: user.login,
+      version: user.version,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
 
     return partialUser; // без пароля
   }
 
-  deleteUser(searchId: string): boolean {
+  deleteUser(searchId: string): PartialUserDto {
+    // проверка на валидность id пользователя
+    if (!validate(searchId))
+      throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск пользователя
+    const deletedUser = this.users.find((i) => i.id === searchId);
     const indexUser = this.users.findIndex((i) => i.id === searchId);
-    if (indexUser) {
-      this.users.splice(indexUser, 1);
-      return true;
-    }
-    return false;
+    if (indexUser === -1)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    const respUser: PartialUserDto = {
+      id: deletedUser.id,
+      login: deletedUser.login,
+      version: deletedUser.version,
+      createdAt: deletedUser.createdAt,
+      updatedAt: deletedUser.updatedAt,
+    };
+
+    this.users.splice(indexUser, 1); // удалить из базы
+
+    return respUser;
   }
 }

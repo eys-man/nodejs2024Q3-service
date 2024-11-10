@@ -10,12 +10,12 @@ export class UserDto extends PartialUserDto {
   password: string;
 }
 
-export interface CreateUserDto {
+export class CreateUserDto {
   login: string;
   password: string;
 }
 
-export interface UpdatePasswordDto {
+export class UpdatePasswordDto {
   oldPassword: string; // previous password
   newPassword: string; // new password
 }
