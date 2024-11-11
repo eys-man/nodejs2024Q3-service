@@ -10,12 +10,10 @@ import { v4, validate } from 'uuid';
 
 @Injectable()
 export class UserService {
-  // private readonly users: UserDto[] = [];
-  private users = this.databaseService.getUsers();
-
   constructor(private readonly databaseService: DatabaseService) {}
 
   createUser(newUser: CreateUserDto): PartialUserDto {
+    const users = this.databaseService.getUsers();
     if (
       typeof newUser.login !== 'string' ||
       typeof newUser.password !== 'string'
@@ -31,7 +29,7 @@ export class UserService {
       updatedAt: Date.now(),
     };
 
-    this.users.push(user);
+    users.push(user);
 
     const partialUser = {
       id: user.id,
@@ -41,14 +39,15 @@ export class UserService {
       updatedAt: user.updatedAt,
     };
 
-    this.databaseService.updateUsers(this.users);
+    this.databaseService.updateUsers(users);
 
     return partialUser; // без пароля
   }
 
   getAllUsers(): PartialUserDto[] {
     const partialUsers: PartialUserDto[] = [];
-    this.users.forEach((i) => {
+    const users = this.databaseService.getUsers();
+    users.forEach((i) => {
       partialUsers.push({
         id: i.id,
         login: i.login,
@@ -64,9 +63,9 @@ export class UserService {
     // проверка на валидность id пользователя
     if (!validate(searchId))
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
-
+    const users = this.databaseService.getUsers();
     // поиск пользователя
-    const user = this.users.find((i) => i.id === searchId);
+    const user = users.find((i) => i.id === searchId);
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const partialUser: PartialUserDto = {
@@ -89,8 +88,9 @@ export class UserService {
     if (!validate(searchId))
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
+    const users = this.databaseService.getUsers();
     // поиск пользователя
-    const user = this.users.find((i) => i.id === searchId);
+    const user = users.find((i) => i.id === searchId);
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     // сравнение паролей
@@ -112,7 +112,7 @@ export class UserService {
       updatedAt: user.updatedAt,
     };
 
-    this.databaseService.updateUsers(this.users);
+    this.databaseService.updateUsers(users);
 
     return partialUser; // без пароля
   }
@@ -122,9 +122,10 @@ export class UserService {
     if (!validate(searchId))
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
+    const users = this.databaseService.getUsers();
     // поиск пользователя
-    const deletedUser = this.users.find((i) => i.id === searchId);
-    const indexUser = this.users.findIndex((i) => i.id === searchId);
+    const deletedUser = users.find((i) => i.id === searchId);
+    const indexUser = users.findIndex((i) => i.id === searchId);
     if (indexUser === -1)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
@@ -136,9 +137,9 @@ export class UserService {
       updatedAt: deletedUser.updatedAt,
     };
 
-    this.users.splice(indexUser, 1); // удалить из базы
+    users.splice(indexUser, 1); // удалить из базы
 
-    this.databaseService.updateUsers(this.users);
+    this.databaseService.updateUsers(users);
 
     return respUser;
   }
