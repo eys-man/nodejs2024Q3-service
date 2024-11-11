@@ -1,27 +1,13 @@
-# Home Library Service
+# Home Library Service. Part 1
 
-## Prerequisites
+## How to use this app
 
-- Git - [Download & Install Git](https://git-scm.com/downloads).
-- Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager.
-
-## Downloading
-
-```
-git clone {repository URL}
-```
-
-## Installing NPM modules
-
-```
-npm install
-```
-
-## Running application
-
-```
-npm start
-```
+- clone this repository (`git clone https://github.com/eys-man/nodejs2024Q3-service`)
+- change folder to `nodejs2024Q3-service` (`cd nodejs2024Q3-service`)
+- go to branch `dev` from `master` (`git switch dev`)
+- install all dependencies (`npm install`)
+- copy `.env.sample` as `.env` into the same folder
+- run server (`npm run start`)
 
 After starting the app on port (4000 as default) you can open
 in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
