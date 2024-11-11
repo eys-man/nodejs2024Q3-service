@@ -41,6 +41,8 @@ export class UserService {
       updatedAt: user.updatedAt,
     };
 
+    this.databaseService.updateUsers(this.users);
+
     return partialUser; // без пароля
   }
 
@@ -110,6 +112,8 @@ export class UserService {
       updatedAt: user.updatedAt,
     };
 
+    this.databaseService.updateUsers(this.users);
+
     return partialUser; // без пароля
   }
 
@@ -133,6 +137,8 @@ export class UserService {
     };
 
     this.users.splice(indexUser, 1); // удалить из базы
+
+    this.databaseService.updateUsers(this.users);
 
     return respUser;
   }

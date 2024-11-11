@@ -6,11 +6,13 @@ import { v4, validate } from 'uuid';
 @Injectable()
 export class TrackService {
   // private readonly tracks: TrackDto[] = [];
-  private tracks = this.databaseService.getTracks();
+  // private tracks = this.databaseService.getTracks();
 
   constructor(private readonly databaseService: DatabaseService) {}
 
   createTrack(newTrack: CreateTrackDto): TrackDto {
+    const tracks = this.databaseService.getTracks();
+
     if (
       typeof newTrack.name !== 'string' ||
       typeof newTrack.duration !== 'number'
@@ -27,13 +29,17 @@ export class TrackService {
       duration: newTrack.duration,
     };
 
-    this.tracks.push(track);
+    // this.tracks.push(track);
+    tracks.push(track);
+
+    this.databaseService.updateTracks(tracks);
 
     return track;
   }
 
   getAllTracks(): TrackDto[] {
-    return this.tracks;
+    // return this.tracks;
+    return this.databaseService.getTracks();
   }
 
   getTrackById(searchId: string): TrackDto | undefined {
@@ -42,7 +48,8 @@ export class TrackService {
       throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);
 
     // поиск трека
-    const track = this.tracks.find((i) => i.id === searchId);
+    const tracks = this.databaseService.getTracks();
+    const track = tracks.find((i) => i.id === searchId);
     if (!track)
       throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
 
@@ -67,17 +74,26 @@ export class TrackService {
       throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
 
     // поиск трека
-    const track = this.tracks.find((i) => i.id === searchId);
+    const tracks = this.databaseService.getTracks();
+    const track = tracks.find((i) => i.id === searchId);
     if (!track)
       throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
 
-    return {
-      id: track.id,
-      name: newTrackData.name,
-      artistId: newTrackData.artistId,
-      albumId: newTrackData.albumId,
-      duration: newTrackData.duration,
-    };
+    track.name = newTrackData.name;
+    track.artistId = newTrackData.artistId;
+    track.albumId = newTrackData.albumId;
+    track.duration = newTrackData.duration;
+
+    this.databaseService.updateTracks(tracks);
+
+    // return {
+    //   id: track.id,
+    //   name: newTrackData.name,
+    //   artistId: newTrackData.artistId,
+    //   albumId: newTrackData.albumId,
+    //   duration: newTrackData.duration,
+    // };
+    return track;
   }
 
   deleteTrack(searchId: string): TrackDto {
@@ -86,12 +102,18 @@ export class TrackService {
       throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);
 
     // поиск трека
-    const deletedTrack = this.tracks.find((i) => i.id === searchId);
-    const indexTrack = this.tracks.findIndex((i) => i.id === searchId);
+    const tracks = this.databaseService.getTracks();
+    const deletedTrack = tracks.find((i) => i.id === searchId);
+    const indexTrack = tracks.findIndex((i) => i.id === searchId);
     if (indexTrack === -1)
       throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
 
-    this.tracks.splice(indexTrack, 1); // удалить из базы
+    tracks.splice(indexTrack, 1); // удалить из базы
+
+    this.databaseService.updateTracks(tracks);
+
+    // удалить из фаворитов
+    this.databaseService.updateFavoritesTracks('remove', searchId);
 
     return deletedTrack;
   }
