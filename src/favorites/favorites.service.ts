@@ -5,13 +5,10 @@ import { validate } from 'uuid';
 
 @Injectable()
 export class FavoritesService {
-  // private favorites = this.databaseService.getFavorites();
-
   constructor(private readonly databaseService: DatabaseService) {}
 
   getAllFavorites(): FavoritesDto {
     return this.databaseService.getFavorites();
-    // return this.favorites;
   }
 
   addTrack(trackId: string) {
