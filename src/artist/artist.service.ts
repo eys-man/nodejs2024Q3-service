@@ -96,12 +96,8 @@ export class ArtistService {
     if (indexArtist === -1)
       throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
 
-    artists.splice(indexArtist, 1); // удалить из базы
-
-    this.databaseService.updateArtists(artists);
-
     // удалить из фаворитов, альбомов и треков
-    this.databaseService.updateFavoritesArtists('remove', searchId);
+    this.databaseService.updateFavoritesArtists('remove', deletedArtist);
 
     const tracks: TrackDto[] = this.databaseService.getTracks();
     const track: TrackDto = tracks.find((i) => i.artistId === searchId);
@@ -112,6 +108,10 @@ export class ArtistService {
     const album = albums.find((i) => i.artistId === searchId);
     if (album) album.artistId = null;
     this.databaseService.updateAlbums(albums);
+
+    // удалить из базы
+    artists.splice(indexArtist, 1);
+    this.databaseService.updateArtists(artists);
 
     return deletedArtist;
   }

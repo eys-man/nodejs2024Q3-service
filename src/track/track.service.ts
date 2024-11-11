@@ -108,12 +108,12 @@ export class TrackService {
     if (indexTrack === -1)
       throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
 
-    tracks.splice(indexTrack, 1); // удалить из базы
-
-    this.databaseService.updateTracks(tracks);
-
     // удалить из фаворитов
-    this.databaseService.updateFavoritesTracks('remove', searchId);
+    this.databaseService.updateFavoritesTracks('remove', deletedTrack);
+
+    // удалить из базы
+    tracks.splice(indexTrack, 1);
+    this.databaseService.updateTracks(tracks);
 
     return deletedTrack;
   }

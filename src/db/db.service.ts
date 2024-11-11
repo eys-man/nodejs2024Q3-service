@@ -23,7 +23,6 @@ export class DatabaseService {
 
   updateUsers(users: UserDto[]) {
     this.users = structuredClone(users);
-    // this.users = [...users];
   }
 
   getArtists() {
@@ -32,7 +31,6 @@ export class DatabaseService {
 
   updateArtists(artists: ArtistDto[]) {
     this.artists = structuredClone(artists);
-    // this.artists = [...artists];
   }
 
   getTracks() {
@@ -41,7 +39,6 @@ export class DatabaseService {
 
   updateTracks(tracks: TrackDto[]) {
     this.tracks = structuredClone(tracks);
-    // this.tracks = [...tracks];
   }
 
   getAlbums() {
@@ -50,34 +47,47 @@ export class DatabaseService {
 
   updateAlbums(albums: AlbumDto[]) {
     this.albums = structuredClone(albums);
-    // this.albums = [...albums];
   }
 
   getFavorites() {
     return this.favorites;
   }
 
-  updateFavoritesArtists(action: 'add' | 'remove', artistId: string) {
-    if (action === 'add') this.favorites.artists.push(artistId);
-    else {
-      const index = this.favorites.artists.findIndex((i) => i === artistId);
-      this.favorites.artists.splice(index, 1);
+  updateFavoritesArtists(action: 'add' | 'remove', updArtist: ArtistDto) {
+    // найти в базе этого артиста
+    const index = this.favorites.artists.findIndex(
+      (i) => i.id === updArtist.id,
+    );
+    if (index !== -1) {
+      if (action === 'remove') {
+        this.favorites.artists.splice(index, 1);
+      }
+    } else {
+      if (action === 'add') this.favorites.artists.push(updArtist);
     }
   }
 
-  updateFavoritesAlbums(action: 'add' | 'remove', albumId: string) {
-    if (action === 'add') this.favorites.albums.push(albumId);
-    else {
-      const index = this.favorites.albums.findIndex((i) => i === albumId);
-      this.favorites.albums.splice(index, 1);
+  updateFavoritesAlbums(action: 'add' | 'remove', updAlbum: AlbumDto) {
+    // найти в базе этот альбом
+    const index = this.favorites.albums.findIndex((i) => i.id === updAlbum.id);
+    if (index !== -1) {
+      if (action === 'remove') {
+        this.favorites.albums.splice(index, 1);
+      }
+    } else {
+      if (action === 'add') this.favorites.albums.push(updAlbum);
     }
   }
 
-  updateFavoritesTracks(action: 'add' | 'remove', trackId: string) {
-    if (action === 'add') this.favorites.tracks.push(trackId);
-    else {
-      const index = this.favorites.tracks.findIndex((i) => i === trackId);
-      this.favorites.tracks.splice(index, 1);
+  updateFavoritesTracks(action: 'add' | 'remove', updTrack: TrackDto) {
+    // найти в базе этот альбом
+    const index = this.favorites.tracks.findIndex((i) => i.id === updTrack.id);
+    if (index !== -1) {
+      if (action === 'remove') {
+        this.favorites.tracks.splice(index, 1);
+      }
+    } else {
+      if (action === 'add') this.favorites.tracks.push(updTrack);
     }
   }
 }

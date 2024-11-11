@@ -101,17 +101,17 @@ export class AlbumService {
     if (indexAlbum === -1)
       throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
 
-    albums.splice(indexAlbum, 1); // удалить из базы
-
-    this.databaseService.updateAlbums(albums);
-
     // удалить из фаворитов и треков
-    this.databaseService.updateFavoritesAlbums('remove', searchId);
+    this.databaseService.updateFavoritesAlbums('remove', deletedAlbum);
 
     const tracks: TrackDto[] = this.databaseService.getTracks();
     const track = tracks.find((i) => i.albumId === searchId);
     if (track) track.albumId = null;
     this.databaseService.updateTracks(tracks);
+
+    // удалить из базы
+    albums.splice(indexAlbum, 1);
+    this.databaseService.updateAlbums(albums);
 
     return deletedAlbum;
   }
