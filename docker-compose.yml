@@ -1,0 +1,60 @@
+services:
+  db:
+    # image: eyesman/nodejs2024Q3-service-db
+    container_name: nodejs2024Q3-service-db
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    environment:
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data
+      - TZ=${TZ}
+      - PGTZ=${PGTZ}
+    ports:
+      - '${DB_PORT}:${DB_PORT}'
+    env_file:
+      - .env
+    volumes:
+      - data:/var/lib/postgresql/data
+      - logs:/logs
+    restart: always
+    networks:
+      - app_network
+    # healthcheck:
+    #   test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
+    #   interval: 5s
+    #   timeout: 10s
+    #   retries: 5
+    # command: postgres -c port=${DB_PORT} -c logging_collector=on -c log_destination=stderr -c log_directory=/logs -c log_statement=all
+
+  app:
+    # image: eyesman/nodejs2024Q3-service-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nodejs2024Q3-service-app
+    environment:
+      - PORT=${PORT}
+    ports:
+      - '${PORT}:${PORT}'
+    depends_on:
+      - db
+      # db:
+      #   condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    restart: always
+    networks:
+      - app_network
+    # command: npm run start:dev
+
+volumes:
+  data:
+  logs:
+
+networks:
+  app_network:
+    driver: bridge
