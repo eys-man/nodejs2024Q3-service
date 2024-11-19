@@ -28,7 +28,7 @@ services:
     #   interval: 5s
     #   timeout: 10s
     #   retries: 5
-    # command: postgres -c port=${DB_PORT} -c logging_collector=on -c log_destination=stderr -c log_directory=/logs -c log_statement=all
+    command: postgres -c port=${DB_PORT} -c logging_collector=on -c log_destination=stderr -c log_directory=/logs -c log_statement=all
 
   app:
     # image: eyesman/nodejs2024Q3-service-app
@@ -49,7 +49,7 @@ services:
     restart: always
     networks:
       - app_network
-    # command: npm run start:dev
+    command: npm run start:dev
 
 volumes:
   data:

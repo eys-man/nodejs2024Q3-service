@@ -2,4 +2,4 @@ FROM postgres:17.1-alpine3.20
 RUN	mkdir /logs
 RUN	chown postgres:postgres /logs
 
-EXPOSE ${DB_PORT}
+# EXPOSE ${DB_PORT}
