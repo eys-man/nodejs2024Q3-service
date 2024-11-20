@@ -1,39 +1,91 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateArtistDto } from './dto/artist.dto';
 import { Artist } from './entity/artist.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { validate } from 'uuid';
 
 @Injectable()
 export class ArtistService {
   constructor(
-    @InjectRepository(Artist) private artistRepository: Repository<Artist>,
+    @InjectRepository(Artist) private artistsRepo: Repository<Artist>,
   ) {}
 
-  createArtist(createArtistDto: CreateArtistDto): Promise<Artist> {
-    return this.artistRepository.save(createArtistDto);
+  async createArtist(newArtist: CreateArtistDto): Promise<CreateArtistDto> {
+    if (
+      typeof newArtist.name !== 'string' ||
+      typeof newArtist.grammy !== 'boolean'
+    )
+      throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
+
+    await this.artistsRepo.save(newArtist);
+
+    return newArtist;
   }
 
-  public getAllArtists(): Promise<Artist[]> {
-    return this.artistRepository.find();
+  async getAllArtists(): Promise<Artist[]> {
+    return await this.artistsRepo.find();
   }
 
-  getArtistById(id: string): Promise<Artist | null> {
-    return this.artistRepository.findOneBy({ id });
+  async getArtistById(searchId: string): Promise<Artist> {
+    // проверка на валидность id артиста
+    if (!validate(searchId))
+      throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск артиста
+    const artist = this.artistsRepo.findOne({ where: { id: searchId } });
+    if (!artist)
+      throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+
+    return artist;
   }
 
   async updateArtist(
-    id: string,
-    updateData: Partial<Artist>,
-  ): Promise<Artist | null> {
-    const artist: Artist | null = await this.artistRepository.findOneBy({ id });
+    searchId: string,
+    newArtistData: CreateArtistDto,
+  ): Promise<Artist> {
+    // проверка на пустой dto
+    if (Object.keys(newArtistData).length == 0)
+      throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
 
-    if (!artist) return null;
+    // проверка на валидность id трека
+    if (!validate(searchId))
+      throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
 
-    return this.artistRepository.save({ ...artist, ...updateData });
+    if (
+      typeof newArtistData.name !== 'string' ||
+      typeof newArtistData.grammy !== 'boolean'
+    )
+      throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
+
+    // поиск артиста
+    const artist = await this.getArtistById(searchId);
+    if (!artist)
+      throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+
+    artist.name = newArtistData.name;
+    artist.grammy = newArtistData.grammy;
+
+    await this.artistsRepo.save(artist);
+
+    return artist;
   }
 
-  deleteArtist(artist: Artist): Promise<Artist> {
-    return this.artistRepository.remove(artist);
+  async deleteArtist(searchId: string): Promise<CreateArtistDto> {
+    // проверка на валидность id артиста
+    if (!validate(searchId))
+      throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск артиста
+    const artist = await this.getArtistById(searchId);
+    if (!artist)
+      throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+
+    // todo: удалить из фаворитов и альбомов
+
+    // удалить из базы
+    await this.artistsRepo.delete({ id: searchId });
+
+    return artist;
   }
 }

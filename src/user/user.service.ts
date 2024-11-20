@@ -3,33 +3,34 @@ import {
   CreateUserDto,
   PartialUserDto,
   UpdatePasswordDto,
-  UserDto,
 } from './dto/users.dto';
-import { DatabaseService } from '../db/db.service';
-import { v4, validate } from 'uuid';
+import { validate } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entity/user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(@InjectRepository(User) private usersRepo: Repository<User>) {}
 
-  createUser(newUser: CreateUserDto): PartialUserDto {
-    const users = this.databaseService.getUsers();
+  async createUser(newUser: CreateUserDto): Promise<PartialUserDto> {
     if (
       typeof newUser.login !== 'string' ||
       typeof newUser.password !== 'string'
     )
       throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
 
-    const user: UserDto = {
-      id: v4(),
-      login: newUser.login,
-      password: newUser.password,
-      version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+    // const user: UserDto = {
+    //   id: v4(),
+    //   login: newUser.login,
+    //   password: newUser.password,
+    //   version: 1,
+    //   createdAt: Date.now(),
+    //   updatedAt: Date.now(),
+    // };
 
-    users.push(user);
+    // users.push(user);
+    const user = await this.usersRepo.save(newUser);
 
     const partialUser = {
       id: user.id,
@@ -39,14 +40,13 @@ export class UserService {
       updatedAt: user.updatedAt,
     };
 
-    this.databaseService.updateUsers(users);
-
     return partialUser; // без пароля
   }
 
-  getAllUsers(): PartialUserDto[] {
+  async getAllUsers(): Promise<PartialUserDto[]> {
     const partialUsers: PartialUserDto[] = [];
-    const users = this.databaseService.getUsers();
+    const users = await this.usersRepo.find();
+
     users.forEach((i) => {
       partialUsers.push({
         id: i.id,
@@ -59,13 +59,13 @@ export class UserService {
     return partialUsers; // вывести без пароля
   }
 
-  getUserById(searchId: string): PartialUserDto | undefined {
+  async getUserById(searchId: string): Promise<PartialUserDto> {
     // проверка на валидность id пользователя
     if (!validate(searchId))
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
-    const users = this.databaseService.getUsers();
+
     // поиск пользователя
-    const user = users.find((i) => i.id === searchId);
+    const user = await this.usersRepo.findOne({ where: { id: searchId } });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const partialUser: PartialUserDto = {
@@ -79,7 +79,10 @@ export class UserService {
     return partialUser; // без пароля
   }
 
-  updateUser(searchId: string, newPassword: UpdatePasswordDto): PartialUserDto {
+  async updateUser(
+    searchId: string,
+    newPassword: UpdatePasswordDto,
+  ): Promise<PartialUserDto> {
     // проверка на пустой dto
     if (Object.keys(newPassword).length == 0)
       throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
@@ -88,9 +91,8 @@ export class UserService {
     if (!validate(searchId))
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
-    const users = this.databaseService.getUsers();
     // поиск пользователя
-    const user = users.find((i) => i.id === searchId);
+    const user = await this.usersRepo.findOne({ where: { id: searchId } });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     // сравнение паролей
@@ -112,34 +114,29 @@ export class UserService {
       updatedAt: user.updatedAt,
     };
 
-    this.databaseService.updateUsers(users);
+    await this.usersRepo.save(user);
 
     return partialUser; // без пароля
   }
 
-  deleteUser(searchId: string): PartialUserDto {
+  async deleteUser(searchId: string): Promise<PartialUserDto> {
     // проверка на валидность id пользователя
     if (!validate(searchId))
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
-    const users = this.databaseService.getUsers();
     // поиск пользователя
-    const deletedUser = users.find((i) => i.id === searchId);
-    const indexUser = users.findIndex((i) => i.id === searchId);
-    if (indexUser === -1)
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    const user = await this.getUserById(searchId);
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const respUser: PartialUserDto = {
-      id: deletedUser.id,
-      login: deletedUser.login,
-      version: deletedUser.version,
-      createdAt: deletedUser.createdAt,
-      updatedAt: deletedUser.updatedAt,
+      id: user.id,
+      login: user.login,
+      version: user.version,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
 
-    users.splice(indexUser, 1); // удалить из базы
-
-    this.databaseService.updateUsers(users);
+    await this.usersRepo.delete({ id: searchId });
 
     return respUser;
   }

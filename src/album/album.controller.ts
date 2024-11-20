@@ -11,7 +11,6 @@ import {
 import { AlbumService } from './album.service';
 import { CreateAlbumDto } from './dto/album.dto';
 import { StatusCodes } from 'http-status-codes';
-import { Album } from './entity/album.entity';
 
 @Controller('album')
 export class AlbumController {
@@ -38,8 +37,7 @@ export class AlbumController {
 
   @Delete(':id')
   @HttpCode(StatusCodes.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    const album: Album | null = await this.albumService.getAlbumById(id);
-    return this.albumService.deleteAlbum(album);
+  remove(@Param('id') id: string) {
+    return this.albumService.deleteAlbum(id);
   }
 }

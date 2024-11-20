@@ -11,7 +11,6 @@ import {
 import { TrackService } from './track.service';
 import { CreateTrackDto } from './dto/track.dto';
 import { StatusCodes } from 'http-status-codes';
-import { Track } from './entity/track.entity';
 
 @Controller('track')
 export class TrackController {
@@ -39,7 +38,7 @@ export class TrackController {
   @Delete(':id')
   @HttpCode(StatusCodes.NO_CONTENT)
   async remove(@Param('id') id: string) {
-    const track: Track | null = await this.trackService.getTrackById(id);
-    return this.trackService.deleteTrack(track);
+    // const track: Track | null = await this.trackService.getTrackById(id);
+    return this.trackService.deleteTrack(id);
   }
 }

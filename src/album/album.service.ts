@@ -1,39 +1,93 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAlbumDto } from './dto/album.dto';
-import { Album } from './entity/album.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { validate } from 'uuid';
 import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Album } from './entity/album.entity';
 
 @Injectable()
 export class AlbumService {
-  constructor(
-    @InjectRepository(Album) private albumRepository: Repository<Album>,
-  ) {}
+  constructor(@InjectRepository(Album) private albumsRepo: Repository<Album>) {}
 
-  createAlbum(createAlbumDto: CreateAlbumDto): Promise<Album> {
-    return this.albumRepository.save(createAlbumDto);
+  async createAlbum(newAlbum: CreateAlbumDto): Promise<CreateAlbumDto> {
+    if (
+      typeof newAlbum.name !== 'string' ||
+      typeof newAlbum.year !== 'number'
+      // !validate(newAlbum.artistId)
+    )
+      throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
+
+    await this.albumsRepo.save(newAlbum);
+
+    return newAlbum;
   }
 
-  getAllAlbums(): Promise<Album[]> {
-    return this.albumRepository.find();
+  async getAllAlbums(): Promise<Album[]> {
+    // return this.albums;
+    return await this.albumsRepo.find();
   }
 
-  getAlbumById(id: string): Promise<Album | null> {
-    return this.albumRepository.findOneBy({ id });
+  async getAlbumById(searchId: string): Promise<Album> {
+    // проверка на валидность id альбома
+    if (!validate(searchId))
+      throw new HttpException('AlbumId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск альбома
+    const album = this.albumsRepo.findOne({ where: { id: searchId } });
+    if (!album)
+      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+
+    return album;
   }
 
   async updateAlbum(
-    id: string,
-    updateData: Partial<Album>,
-  ): Promise<Album | null> {
-    const album: Album | null = await this.albumRepository.findOneBy({ id });
+    searchId: string,
+    newAlbumData: CreateAlbumDto,
+  ): Promise<Album> {
+    // проверка на пустой dto
+    if (Object.keys(newAlbumData).length == 0)
+      throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
 
-    if (!album) return null;
+    // проверка на валидность id трека
+    if (!validate(searchId))
+      throw new HttpException('AlbumId is not uuid', HttpStatus.BAD_REQUEST);
 
-    return this.albumRepository.save({ ...album, ...updateData });
+    if (
+      typeof newAlbumData.name !== 'string' ||
+      typeof newAlbumData.year !== 'number'
+      // !validate(newAlbumData.artistId)
+    )
+      throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
+
+    // поиск альбома
+    const album = await this.getAlbumById(searchId);
+    if (!album)
+      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+
+    album.name = newAlbumData.name;
+    album.artistId = newAlbumData.artistId;
+    album.year = newAlbumData.year;
+
+    await this.albumsRepo.save(album);
+
+    return album;
   }
 
-  deleteAlbum(album: Album): Promise<Album> {
-    return this.albumRepository.remove(album);
+  async deleteAlbum(searchId: string): Promise<CreateAlbumDto> {
+    // проверка на валидность id альбома
+    if (!validate(searchId))
+      throw new HttpException('AlbumId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск альбома
+    const album = await this.getAlbumById(searchId);
+    if (!album)
+      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+
+    // todo: удалить из фаворитов и треков
+
+    // удалить из базы
+    await this.albumsRepo.delete({ id: searchId });
+
+    return album;
   }
 }

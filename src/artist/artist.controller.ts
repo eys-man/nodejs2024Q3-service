@@ -11,7 +11,6 @@ import {
 import { ArtistService } from './artist.service';
 import { CreateArtistDto } from './dto/artist.dto';
 import { StatusCodes } from 'http-status-codes';
-import { Artist } from './entity/artist.entity';
 
 @Controller('artist')
 export class ArtistController {
@@ -38,8 +37,7 @@ export class ArtistController {
 
   @Delete(':id')
   @HttpCode(StatusCodes.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    const artist: Artist | null = await this.artistService.getArtistById(id);
-    return this.artistService.deleteArtist(artist);
+  remove(@Param('id') id: string) {
+    return this.artistService.deleteArtist(id);
   }
 }
