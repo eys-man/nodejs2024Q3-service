@@ -4,20 +4,20 @@ import { validate } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Favorites } from './entity/favorites.entity';
 import { Repository } from 'typeorm';
-import { Track } from 'src/track/entity/track.entity';
-import { Album } from 'src/album/entity/album.entity';
-import { Artist } from 'src/artist/entity/artist.entity';
+// import { Track } from 'src/track/entity/track.entity';
+// import { Album } from 'src/album/entity/album.entity';
+// import { Artist } from 'src/artist/entity/artist.entity';
 import { ArtistService } from 'src/artist/artist.service';
 import { AlbumService } from 'src/album/album.service';
 import { TrackService } from 'src/track/track.service';
 
 @Injectable()
 export class FavoritesService {
-  artistService: ArtistService;
-  albumService: AlbumService;
-  tracksService: TrackService;
   constructor(
     @InjectRepository(Favorites) private favsRepo: Repository<Favorites>,
+    private artistService: ArtistService,
+    private albumService: AlbumService,
+    private tracksService: TrackService,
   ) {}
 
   async getAllFavorites(): Promise<FavoritesDto> {
@@ -29,13 +29,12 @@ export class FavoritesService {
     const a: FavoritesDto = {
       artists,
       albums,
-      tracks,     
-    }
-    
+      tracks,
+    };
     return a;
   }
 
-async addTrack(trackId: string) {
+  async addTrack(trackId: string) {
     // проверка на валидность id трека
     if (!validate(trackId))
       throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);
@@ -53,7 +52,7 @@ async addTrack(trackId: string) {
 
     const favs = await this.getAllFavorites();
     favs.tracks.push(track);
- 
+
     // добавить в БД в favorites
     await this.favsRepo.save(favs);
 
@@ -131,7 +130,7 @@ async addTrack(trackId: string) {
     const favs = await this.getAllFavorites();
 
     const index = favs.artists.findIndex((i) => i.id === artist.id);
-    if (index !== -1){
+    if (index !== -1) {
       favs.artists.splice(index, 1);
     }
 
@@ -160,7 +159,7 @@ async addTrack(trackId: string) {
     const favs = await this.getAllFavorites();
 
     const index = favs.albums.findIndex((i) => i.id === album.id);
-    if (index !== -1){
+    if (index !== -1) {
       favs.albums.splice(index, 1);
     }
 
@@ -189,7 +188,7 @@ async addTrack(trackId: string) {
     const favs = await this.getAllFavorites();
 
     const index = favs.tracks.findIndex((i) => i.id === track.id);
-    if (index !== -1){
+    if (index !== -1) {
       favs.albums.splice(index, 1);
     }
 

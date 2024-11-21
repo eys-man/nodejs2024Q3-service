@@ -4,10 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Track } from './entity/track.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'uuid';
+import { FavoritesService } from 'src/favorites/favorites.service';
 
 @Injectable()
 export class TrackService {
-  constructor(@InjectRepository(Track) private tracksRepo: Repository<Track>) {}
+  constructor(
+    @InjectRepository(Track) private tracksRepo: Repository<Track>,
+    private favsService: FavoritesService,
+  ) {}
 
   async createTrack(newTrack: CreateTrackDto): Promise<CreateTrackDto> {
     if (
@@ -32,6 +36,32 @@ export class TrackService {
 
     // поиск трека
     const track = this.tracksRepo.findOne({ where: { id: searchId } });
+    if (!track)
+      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+
+    return track;
+  }
+
+  async getTrackByArtistId(artistId: string): Promise<Track> {
+    // проверка на валидность id трека
+    if (!validate(artistId))
+      throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск трека
+    const track = this.tracksRepo.findOne({ where: { artistId: artistId } });
+    if (!track)
+      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+
+    return track;
+  }
+
+  async getTrackByAlbumId(albumId: string): Promise<Track> {
+    // проверка на валидность id трека
+    if (!validate(albumId))
+      throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);
+
+    // поиск трека
+    const track = this.tracksRepo.findOne({ where: { albumId: albumId } });
     if (!track)
       throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
 
@@ -81,7 +111,8 @@ export class TrackService {
     if (!track)
       throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
 
-    // todo: удалить из фаворитов
+    // удалить из фаворитов
+    this.favsService.removeTrack(searchId);
 
     // удалить из базы
     await this.tracksRepo.delete({ id: searchId });

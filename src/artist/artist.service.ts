@@ -4,11 +4,19 @@ import { Artist } from './entity/artist.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { validate } from 'uuid';
+import { FavoritesService } from 'src/favorites/favorites.service';
+import { AlbumService } from 'src/album/album.service';
+import { TrackService } from 'src/track/track.service';
+import { CreateTrackDto } from 'src/track/dto/track.dto';
+import { CreateAlbumDto } from 'src/album/dto/album.dto';
 
 @Injectable()
 export class ArtistService {
   constructor(
     @InjectRepository(Artist) private artistsRepo: Repository<Artist>,
+    private favsService: FavoritesService,
+    private albumService: AlbumService,
+    private trackService: TrackService,
   ) {}
 
   async createArtist(newArtist: CreateArtistDto): Promise<CreateArtistDto> {
@@ -81,7 +89,19 @@ export class ArtistService {
     if (!artist)
       throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
 
-    // todo: удалить из фаворитов и альбомов
+    // удалить из фаворитов
+    this.favsService.removeArtist(searchId);
+
+    // удалить из треков и альбомов
+    const track = await this.trackService.getTrackByArtistId(searchId);
+    track.artistId = null;
+    const updTrack: CreateTrackDto = { ...track };
+    this.trackService.updateTrack(track.id, updTrack);
+
+    const album = await this.albumService.getAlbumByArtistId(searchId);
+    track.artistId = null;
+    const updAlbum: CreateAlbumDto = { ...album };
+    this.albumService.updateAlbum(album.id, updAlbum);
 
     // удалить из базы
     await this.artistsRepo.delete({ id: searchId });
