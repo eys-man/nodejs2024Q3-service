@@ -1,24 +1,47 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { FavoritesDto } from './dto/favorites.dto';
-import { DatabaseService } from '../db/db.service';
 import { validate } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Favorites } from './entity/favorites.entity';
+import { Repository } from 'typeorm';
+import { Track } from 'src/track/entity/track.entity';
+import { Album } from 'src/album/entity/album.entity';
+import { Artist } from 'src/artist/entity/artist.entity';
+import { ArtistService } from 'src/artist/artist.service';
+import { AlbumService } from 'src/album/album.service';
+import { TrackService } from 'src/track/track.service';
 
 @Injectable()
 export class FavoritesService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  artistService: ArtistService;
+  albumService: AlbumService;
+  tracksService: TrackService;
+  constructor(
+    @InjectRepository(Favorites) private favsRepo: Repository<Favorites>,
+  ) {}
 
-  getAllFavorites(): FavoritesDto {
-    return this.databaseService.getFavorites();
+  async getAllFavorites(): Promise<FavoritesDto> {
+    const favs = await this.favsRepo.find();
+    const artists = favs[0].artists;
+    const albums = favs[0].albums;
+    const tracks = favs[0].tracks;
+
+    const a: FavoritesDto = {
+      artists,
+      albums,
+      tracks,     
+    }
+    
+    return a;
   }
 
-  addTrack(trackId: string) {
+async addTrack(trackId: string) {
     // проверка на валидность id трека
     if (!validate(trackId))
       throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);
 
     // найти среди всех треков в базе этот трек
-    const tracks = this.databaseService.getTracks();
-    const track = tracks.find((i) => i.id === trackId);
+    const track = await this.tracksService.getTrackById(trackId);
 
     // если трека в базе нет
     if (!track) {
@@ -28,20 +51,22 @@ export class FavoritesService {
       );
     }
 
+    const favs = await this.getAllFavorites();
+    favs.tracks.push(track);
+ 
     // добавить в БД в favorites
-    this.databaseService.updateFavoritesTracks('add', track);
+    await this.favsRepo.save(favs);
 
     return track;
   }
 
-  addAlbum(albumId: string) {
+  async addAlbum(albumId: string) {
     // проверка на валидность id альбома
     if (!validate(albumId))
       throw new HttpException('AlbumId is not uuid', HttpStatus.BAD_REQUEST);
 
-    // найти среди всех альбомов в базе этот альбом
-    const albums = this.databaseService.getAlbums();
-    const album = albums.find((i) => i.id === albumId);
+    // найти среди всех альбомов в базе этот трек
+    const album = await this.albumService.getAlbumById(albumId);
 
     // если альбома в базе нет
     if (!album) {
@@ -51,21 +76,23 @@ export class FavoritesService {
       );
     }
 
+    const favs = await this.getAllFavorites();
+    favs.albums.push(album);
     // добавить в БД в favorites
-    this.databaseService.updateFavoritesAlbums('add', album);
+
+    await this.favsRepo.save(favs);
 
     return album;
   }
 
-  addArtist(artistId: string) {
+  async addArtist(artistId: string) {
     // проверка на валидность id артиста
     if (!validate(artistId)) {
       throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
     }
 
     // найти среди всех артистов в базе этого артиста
-    const artists = this.databaseService.getArtists();
-    const artist = artists.find((i) => i.id === artistId);
+    const artist = await this.artistService.getArtistById(artistId);
 
     // если артиста в базе нет
     if (!artist) {
@@ -75,21 +102,22 @@ export class FavoritesService {
       );
     }
 
+    const favs = await this.getAllFavorites();
+    favs.artists.push(artist);
     // добавить в БД в favorites
-    this.databaseService.updateFavoritesArtists('add', artist);
+
+    await this.favsRepo.save(favs);
 
     return artist;
   }
 
-  removeArtist(artistId: string) {
+  async removeArtist(artistId: string) {
     // проверка на валидность id артиста
     if (!validate(artistId))
       throw new HttpException('ArtistId is not uuid', HttpStatus.BAD_REQUEST);
 
     // найти среди всех артистов в базе этого артиста
-    const artist = this.databaseService
-      .getArtists()
-      .find((i) => i.id === artistId);
+    const artist = await this.artistService.getArtistById(artistId);
 
     // если артиста в базе нет
     if (!artist) {
@@ -99,21 +127,26 @@ export class FavoritesService {
       );
     }
 
-    // удалить из фаворитов этого артиста
-    this.databaseService.updateFavoritesArtists('remove', artist);
+    // удалить из списка фаворитов этого артиста
+    const favs = await this.getAllFavorites();
+
+    const index = favs.artists.findIndex((i) => i.id === artist.id);
+    if (index !== -1){
+      favs.artists.splice(index, 1);
+    }
+
+    await this.favsRepo.save(favs);
 
     return artist;
   }
 
-  removeAlbum(albumId: string) {
+  async removeAlbum(albumId: string) {
     // проверка на валидность id альбома
     if (!validate(albumId))
       throw new HttpException('albumId is not uuid', HttpStatus.BAD_REQUEST);
 
     // найти среди всех альбомов в базе этот альбом
-    const album = this.databaseService
-      .getAlbums()
-      .find((i) => i.id === albumId);
+    const album = await this.albumService.getAlbumById(albumId);
 
     // если альбома в базе нет
     if (!album) {
@@ -124,20 +157,25 @@ export class FavoritesService {
     }
 
     // удалить из фаворитов этот альбом
-    this.databaseService.updateFavoritesAlbums('remove', album);
+    const favs = await this.getAllFavorites();
+
+    const index = favs.albums.findIndex((i) => i.id === album.id);
+    if (index !== -1){
+      favs.albums.splice(index, 1);
+    }
+
+    await this.favsRepo.save(favs);
 
     return album;
   }
 
-  removeTrack(trackId: string) {
+  async removeTrack(trackId: string) {
     // проверка на валидность id трека
     if (!validate(trackId))
       throw new HttpException('trackId is not uuid', HttpStatus.BAD_REQUEST);
 
     // найти среди всех треков в базе этот трек
-    const track = this.databaseService
-      .getTracks()
-      .find((i) => i.id === trackId);
+    const track = await this.albumService.getAlbumById(trackId);
 
     // если трека в базе нет
     if (!track) {
@@ -148,7 +186,14 @@ export class FavoritesService {
     }
 
     // удалить из фаворитов этот трек
-    this.databaseService.updateFavoritesTracks('remove', track);
+    const favs = await this.getAllFavorites();
+
+    const index = favs.tracks.findIndex((i) => i.id === track.id);
+    if (index !== -1){
+      favs.albums.splice(index, 1);
+    }
+
+    await this.favsRepo.save(favs);
 
     return track;
   }

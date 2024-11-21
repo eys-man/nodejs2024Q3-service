@@ -5,8 +5,9 @@ import { FavoritesDto } from './dto/favorites.dto';
 @Controller('favs')
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
+
   @Get()
-  getAll(): FavoritesDto {
+  getAll() {
     return this.favoritesService.getAllFavorites();
   }
 

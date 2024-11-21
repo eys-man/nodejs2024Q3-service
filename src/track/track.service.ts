@@ -25,7 +25,7 @@ export class TrackService {
     return await this.tracksRepo.find();
   }
 
-  getTrackById(searchId: string): Promise<Track> {
+  async getTrackById(searchId: string): Promise<Track> {
     // проверка на валидность id трека
     if (!validate(searchId))
       throw new HttpException('TrackId is not uuid', HttpStatus.BAD_REQUEST);

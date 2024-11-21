@@ -38,7 +38,6 @@ export class TrackController {
   @Delete(':id')
   @HttpCode(StatusCodes.NO_CONTENT)
   async remove(@Param('id') id: string) {
-    // const track: Track | null = await this.trackService.getTrackById(id);
-    return this.trackService.deleteTrack(id);
+    return await this.trackService.deleteTrack(id);
   }
 }

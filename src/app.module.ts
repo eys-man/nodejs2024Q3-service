@@ -10,7 +10,7 @@ import { Artist } from './artist/entity/artist.entity';
 import { Album } from './album/entity/album.entity';
 import { Track } from './track/entity/track.entity';
 import { User } from './user/entity/user.entity';
-import { Favorite } from './favorites/entity/favorite.entity';
+import { Favorites } from './favorites/entity/favorites.entity';
 
 @Module({
   imports: [
@@ -32,7 +32,7 @@ import { Favorite } from './favorites/entity/favorite.entity';
           database: configService.get('DB_NAME'),
           synchronize: false,
           logging: true,
-          entities: [Artist, Album, Track, User, Favorite],
+          entities: [Artist, Album, Track, User, Favorites],
           migrations: [`${__dirname}/db/migrations/*.ts`],
           migrationsRun: true,
         };
