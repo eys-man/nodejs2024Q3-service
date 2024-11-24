@@ -1,7 +1,7 @@
 services:
   app:
-    # image: eyesman/nodejs2024Q3-service-app
-    container_name: nodejs2024Q3-service-app
+    # image: eyesman/nodejs2024q3-service-app
+    container_name: nodejs2024q3-service-app
     build:
       context: .
       dockerfile: Dockerfile
@@ -22,9 +22,8 @@ services:
     command: npm run start:dev
 
   db:
-    # image: eyesman/nodejs2024Q3-service-db
-    # image: postgres:17-alpine
-    container_name: nodejs2024Q3-service-db
+    # image: eyesman/nodejs2024q3-service-db
+    container_name: nodejs2024q3-service-db
     build:
       dockerfile: Dockerfile.db
       context: .
