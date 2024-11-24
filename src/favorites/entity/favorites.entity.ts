@@ -1,16 +1,31 @@
-import { ArtistDto } from 'src/artist/dto/artist.dto';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { AlbumDto } from 'src/album/dto/album.dto';
-import { TrackDto } from 'src/track/dto/track.dto';
+import { IsUUID } from 'class-validator';
+import { Artist } from '../../artist/entity/artist.entity';
+import { Album } from '../../album/entity/album.entity';
+import { Track } from '../../track/entity/track.entity';
 
-@Entity()
+export class Fav {
+  @IsUUID('4', { each: true })
+  artists: string[];
+
+  @IsUUID('4', { each: true })
+  albums: string[];
+
+  @IsUUID('4', { each: true })
+  tracks: string[];
+
+  constructor(partial: Partial<Fav>) {
+    Object.assign(this, partial);
+  }
+}
+
 export class Favorites {
-  @PrimaryGeneratedColumn('uuid')
-  public id: string;
-  @Column()
-  artists: ArtistDto[];
-  @Column()
-  albums: AlbumDto[];
-  @Column()
-  tracks: TrackDto[];
+  artists: Artist[];
+
+  albums: Album[];
+
+  tracks: Track[];
+
+  constructor(partial: Partial<Favorites>) {
+    Object.assign(this, partial);
+  }
 }

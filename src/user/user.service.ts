@@ -20,43 +20,28 @@ export class UserService {
     )
       throw new HttpException('Invalid initial data', HttpStatus.BAD_REQUEST);
 
-    // const user: UserDto = {
-    //   id: v4(),
-    //   login: newUser.login,
-    //   password: newUser.password,
-    //   version: 1,
-    //   createdAt: Date.now(),
-    //   updatedAt: Date.now(),
-    // };
-
-    // users.push(user);
     const user = await this.usersRepo.save(newUser);
+    if (!user)
+      throw new HttpException(
+        'internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
 
     const partialUser = {
       id: user.id,
       login: user.login,
-      version: 1,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      version: user.version,
+      createdAt: Number(user.createdAt),
+      updatedAt: Number(user.updatedAt),
     };
 
     return partialUser; // без пароля
   }
 
   async getAllUsers(): Promise<PartialUserDto[]> {
-    const partialUsers: PartialUserDto[] = [];
-    const users = await this.usersRepo.find();
-
-    users.forEach((i) => {
-      partialUsers.push({
-        id: i.id,
-        login: i.login,
-        version: i.version,
-        createdAt: i.createdAt,
-        updatedAt: i.updatedAt,
-      });
+    return this.usersRepo.find({
+      select: ['id', 'login', 'version', 'createdAt', 'updatedAt'],
     });
-    return partialUsers; // вывести без пароля
   }
 
   async getUserById(searchId: string): Promise<PartialUserDto> {
@@ -65,7 +50,7 @@ export class UserService {
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
     // поиск пользователя
-    const user = await this.usersRepo.findOne({ where: { id: searchId } });
+    const user = await this.usersRepo.findOneBy({ id: searchId });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const partialUser: PartialUserDto = {
@@ -81,10 +66,10 @@ export class UserService {
 
   async updateUser(
     searchId: string,
-    newPassword: UpdatePasswordDto,
+    updatePassword: UpdatePasswordDto,
   ): Promise<PartialUserDto> {
     // проверка на пустой dto
-    if (Object.keys(newPassword).length == 0)
+    if (Object.keys(updatePassword).length == 0)
       throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
 
     // проверка на валидность id пользователя
@@ -92,30 +77,34 @@ export class UserService {
       throw new HttpException('UserId is not uuid', HttpStatus.BAD_REQUEST);
 
     // поиск пользователя
-    const user = await this.usersRepo.findOne({ where: { id: searchId } });
+    const user = await this.usersRepo.findOneBy({ id: searchId });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     // сравнение паролей
-    if (user.password !== newPassword.oldPassword)
+    if (user.password !== updatePassword.oldPassword)
       throw new HttpException(
         'The password being replaced is incorrect',
         HttpStatus.FORBIDDEN,
       );
 
-    user.password = newPassword.newPassword;
-    user.updatedAt = Date.now();
-    user.version++;
+    user.password = updatePassword.newPassword;
+
+    const updatedUser = await this.usersRepo.save(user);
+    if (!updatedUser)
+      throw new HttpException(
+        'internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
 
     const partialUser: PartialUserDto = {
-      id: user.id,
-      login: user.login,
-      version: user.version,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      id: updatedUser.id,
+      login: updatedUser.login,
+      version: updatedUser.version,
+      createdAt: Number(updatedUser.createdAt),
+      updatedAt: Number(updatedUser.updatedAt),
     };
 
-    await this.usersRepo.save(user);
-
+    // return updatedUser;
     return partialUser; // без пароля
   }
 

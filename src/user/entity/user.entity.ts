@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -10,20 +11,22 @@ import {
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  public id: string;
-
-  @Column({ unique: true })
-  public login: string;
+  id: string;
 
   @Column()
-  public password: string;
+  login!: string;
+
+  @Column()
+  password!: string;
 
   @VersionColumn()
-  public version: number;
+  version!: number;
 
-  @CreateDateColumn()
-  public createdAt: number;
+  @CreateDateColumn({ type: 'timestamp'})
+  createdAt!: number;
+  // createdAt!: Date;
 
-  @UpdateDateColumn()
-  public updatedAt: number;
+  @UpdateDateColumn({ type: 'timestamp' })
+  updatedAt!: number;
+  // updatedAt!: Date;
 }

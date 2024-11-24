@@ -2,30 +2,39 @@ import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Artist } from '../../artist/entity/artist.entity';
 import { Album } from '../../album/entity/album.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Track {
   @PrimaryGeneratedColumn('uuid')
-  public id: string;
+  id: string;
 
   @Column()
-  public name: string;
+  name: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  @ManyToOne(() => Artist, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'artistId' })
-  public artistId: string | null;
+  @Column({ nullable: true })
+  artistId: string | null;
 
-  @Column({ type: 'uuid', nullable: true })
-  @ManyToOne(() => Album, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'albumId' })
-  public albumId: string | null;
+  @OneToOne(() => Artist, { onDelete: 'SET NULL' })
+  @JoinColumn()
+  artist: Artist;
+
+  @Column({ nullable: true })
+  albumId: string | null;
+
+  @OneToOne(() => Album, { onDelete: 'SET NULL' })
+  @JoinColumn()
+  album: Album;
 
   @Column()
-  public duration: number;
+  duration: number;
+
+  @Exclude()
+  @Column({ default: false, select: false })
+  isFavorite: boolean;
 }

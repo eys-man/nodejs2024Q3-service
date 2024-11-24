@@ -1,13 +1,18 @@
+import { Exclude } from 'class-transformer';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Artist {
   @PrimaryGeneratedColumn('uuid')
-  public id: string;
+  id: string;
 
   @Column()
-  public name: string;
+  name: string;
 
   @Column()
-  public grammy: boolean;
+  grammy: boolean;
+  
+  @Exclude()
+  @Column({ default: false, select: false })
+  isFavorite: boolean;
 }

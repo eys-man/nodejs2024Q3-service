@@ -10,7 +10,10 @@ import { Artist } from './artist/entity/artist.entity';
 import { Album } from './album/entity/album.entity';
 import { Track } from './track/entity/track.entity';
 import { User } from './user/entity/user.entity';
-import { Favorites } from './favorites/entity/favorites.entity';
+import { config } from 'dotenv';
+import { Migrations1732414539170 } from './db/1732414539170-migrations';
+
+config();
 
 @Module({
   imports: [
@@ -30,10 +33,12 @@ import { Favorites } from './favorites/entity/favorites.entity';
           host: configService.get('DB_HOST'),
           port: Number(configService.get('DB_PORT')) ?? 5432,
           database: configService.get('DB_NAME'),
+          url: `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DOCKER_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
           synchronize: false,
           logging: true,
-          entities: [Artist, Album, Track, User, Favorites],
-          migrations: [`${__dirname}/db/migrations/*.ts`],
+          entities: [Artist, Album, Track, User],
+          // migrations: [`${__dirname}/db/migrations/*.ts`],
+          migrations: [Migrations1732414539170],
           migrationsRun: true,
         };
       },

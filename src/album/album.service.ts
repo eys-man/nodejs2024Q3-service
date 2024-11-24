@@ -4,17 +4,11 @@ import { validate } from 'uuid';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Album } from './entity/album.entity';
-import { FavoritesService } from 'src/favorites/favorites.service';
-import { TrackService } from 'src/track/track.service';
-import { CreateTrackDto } from 'src/track/dto/track.dto';
+
 
 @Injectable()
 export class AlbumService {
-  constructor(
-    @InjectRepository(Album) private albumsRepo: Repository<Album>,
-    private favsService: FavoritesService,
-    private trackService: TrackService,
-  ) {}
+  constructor(@InjectRepository(Album) private albumsRepo: Repository<Album>) {}
 
   async createAlbum(newAlbum: CreateAlbumDto): Promise<CreateAlbumDto> {
     if (
@@ -30,8 +24,12 @@ export class AlbumService {
   }
 
   async getAllAlbums(): Promise<Album[]> {
-    // return this.albums;
     return await this.albumsRepo.find();
+  }
+
+  async getFavAlbums(): Promise<Album[]> {
+    const albums = await this.getAllAlbums();
+    return albums.filter(i => i.isFavorite);
   }
 
   async getAlbumById(searchId: string): Promise<Album> {
@@ -40,30 +38,47 @@ export class AlbumService {
       throw new HttpException('AlbumId is not uuid', HttpStatus.BAD_REQUEST);
 
     // поиск альбома
-    const album = this.albumsRepo.findOne({ where: { id: searchId } });
+    const album = await this.albumsRepo.findOneBy({id:searchId});
     if (!album)
       throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
 
     return album;
   }
 
-  async getAlbumByArtistId(searchId: string): Promise<Album> {
-    // проверка на валидность id альбома
-    if (!validate(searchId))
-      throw new HttpException('AlbumId is not uuid', HttpStatus.BAD_REQUEST);
+  async getFavoritesAlbums(): Promise<Album[]> {
+    return await this.albumsRepo.find({
+      where: { isFavorite: true },
+      select: ['id', 'name', 'year', 'artistId'],
+    });
+  }
 
-    // поиск альбома
-    const album = this.albumsRepo.findOne({ where: { artistId: searchId } });
+  async addAlbumToFavorites(newAlbum: string) {
+    const album = await this.albumsRepo.findOneBy({ id: newAlbum });
     if (!album)
-      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+      throw new HttpException('Album not exists', HttpStatus.UNPROCESSABLE_ENTITY);
+
+    album.isFavorite = true;
+    return await this.albumsRepo.save(album);
+    
+    // const addedAlbum = await this.albumsRepo.save(album);
+
+    // return {
+    //   id: addedAlbum.id,
+    //   name: addedAlbum.name,
+    //   year: addedAlbum.year,
+    //   artistId: addedAlbum.artistId,
+    // };
+  }
+
+  async delAlbumFromFavorites(delAlbum: string): Promise<Album> {
+    const album = await this.getAlbumById(delAlbum);
+    album.isFavorite = false;
+    await this.albumsRepo.save(album);
 
     return album;
   }
 
-  async updateAlbum(
-    searchId: string,
-    newAlbumData: CreateAlbumDto,
-  ): Promise<Album> {
+  async updateAlbum(searchId: string, newAlbumData: CreateAlbumDto): Promise<Album> {
     // проверка на пустой dto
     if (Object.keys(newAlbumData).length == 0)
       throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
@@ -87,10 +102,10 @@ export class AlbumService {
     album.name = newAlbumData.name;
     album.artistId = newAlbumData.artistId;
     album.year = newAlbumData.year;
-
     await this.albumsRepo.save(album);
-
     return album;
+
+    // return this.albumsRepo.save({ ...album, ...newAlbumData });
   }
 
   async deleteAlbum(searchId: string): Promise<CreateAlbumDto> {
@@ -102,15 +117,6 @@ export class AlbumService {
     const album = await this.getAlbumById(searchId);
     if (!album)
       throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
-
-    // удалить из фаворитов
-    this.favsService.removeAlbum(searchId);
-
-    // удалить из треков
-    const track = await this.trackService.getTrackByAlbumId(searchId);
-    track.albumId = null;
-    const updTrack: CreateTrackDto = { ...track };
-    this.trackService.updateTrack(track.id, updTrack);
 
     // удалить из базы
     await this.albumsRepo.delete({ id: searchId });
