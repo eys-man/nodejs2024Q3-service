@@ -12,6 +12,7 @@ import { Track } from './track/entity/track.entity';
 import { User } from './user/entity/user.entity';
 import { config } from 'dotenv';
 import { Migrations1732414539170 } from './db/1732414539170-migrations';
+import { LoggingModule } from './logging/logging.module';
 
 config();
 
@@ -48,6 +49,7 @@ config();
     TrackModule,
     AlbumModule,
     FavoritesModule,
+    LoggingModule,
   ],
 })
 export class AppModule {}
