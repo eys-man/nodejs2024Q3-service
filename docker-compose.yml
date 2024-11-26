@@ -14,8 +14,8 @@ services:
     depends_on:
       - db
     volumes:
-      - ./src:/home/node/src
-    restart: on-failure
+      - ./src:/app/src
+    restart: always
     networks:
       - home-library
     command: npm run start:dev

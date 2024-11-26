@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { ArtistModule } from './artist/artist.module';
@@ -13,6 +13,7 @@ import { User } from './user/entity/user.entity';
 import { config } from 'dotenv';
 import { Migrations1732414539170 } from './db/1732414539170-migrations';
 import { LoggingModule } from './logging/logging.module';
+import { LoggingMiddleware } from './logging/logging.middleware';
 
 config();
 
@@ -52,4 +53,8 @@ config();
     LoggingModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+  }
+}
