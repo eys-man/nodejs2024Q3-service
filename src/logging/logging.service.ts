@@ -13,8 +13,6 @@ import {
     private readonly logLevel: number;
     private readonly maxFileSize: number;
     private readonly logsDirectory: string;
-    private readonly errorLogsFile: string;
-    private readonly appLogsFile: string;
     private logPrefix: string;
 
     constructor(private readonly configService: ConfigService) {
@@ -28,31 +26,31 @@ import {
 
     async error(message: string, trace?: string) {
       if (this.logLevel >= 0) {
-        await this.writeLog('error', message, this.errorLogsFile, trace);
+        await this.writeLog('error', message, this.getLogFilePath('error'), trace);
       }
     }
 
     async log(message: string) {
       if (this.logLevel >= 1) {
-        await this.writeLog('log', message, this.appLogsFile);
+        await this.writeLog('log', message, this.getLogFilePath('log'));
       }
     }
 
     async warn(message: string) {
       if (this.logLevel >= 2) {
-        await this.writeLog('warn', message, this.appLogsFile);
+        await this.writeLog('warn', message, this.getLogFilePath('warn'));
       }
     }
 
     async debug(message: string) {
       if (this.logLevel >= 3) {
-        await this.writeLog('debug', message, this.appLogsFile);
+        await this.writeLog('debug', message, this.getLogFilePath('debug'));
       }
     }
 
     async verbose(message: string) {
       if (this.logLevel >= 4) {
-        await this.writeLog('verbose', message, this.appLogsFile);
+        await this.writeLog('verbose', message, this.getLogFilePath('verbose'));
       }
     }
 
@@ -90,25 +88,22 @@ import {
       console.log(message);
     }
 
-    private async rotateFile(filePath: string, level: LogLevel): Promise<string> {
+    private async rotateFile(filePath: string, level: LogLevel): Promise<void> {
       try {
         const state = await fs.stat(filePath);
               
         if (state.size / 1024 >= this.maxFileSize) {
           this.logPrefix = Date.now().toLocaleString();
-          const newFilePath = this.getLogFilePath(level);
-          try {
-            await fs.rename(filePath, newFilePath);
-          } catch (err) {
-            console.log(err);
-          }
-          return newFilePath;
+          // try {
+          //   await fs.unlink(filePath);
+          //   // а можно и не удалять. просто пишется следующий
+          // } catch (err) {
+          //   console.log(err);
+          // }
         }
       } catch (err) {
         console.log(err);
       }
-
-      return filePath;
     }
 
     private getLogFilePath(level: LogLevel): string {
