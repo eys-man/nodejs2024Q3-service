@@ -66,7 +66,7 @@ export class LoggingService implements LoggerService {
       try {
         await mkdir(this.logsDirectory, { recursive: true });
       } catch (err) {
-        console.log(`Не могу созать каталог ${this.logsDirectory}`);
+        console.log(`Can't create folder ${this.logsDirectory}`);
       }
     }
 
@@ -74,8 +74,8 @@ export class LoggingService implements LoggerService {
 
     try {
       await appendFile(filePath, logMessage, { flag: 'a+' });
-    } catch (err) {
-      console.log(`Не могу записать в файл ${filePath}`);
+    } catch {
+      console.log(`Can't write to file ${filePath}`);
     }
 
     console.log(message);
@@ -91,11 +91,11 @@ export class LoggingService implements LoggerService {
         try {
           await unlink(filePath);
         } catch (err) {
-          console.log(err);
+          console.log(`Can't remove file ${filePath}`);
         }
       }
-    } catch (err) {
-      console.log(err);
+    } catch {
+      console.log(`Can't get stats of ${filePath}`);
     }
   }
 
