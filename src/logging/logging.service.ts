@@ -86,7 +86,6 @@ export class LoggingService implements LoggerService {
       const state = await stat(filePath);
 
       if (state.size / 1024 >= this.maxFileSize) {
-        // 
         this.timeStamp = new Date().toISOString().replace(/[:.]/g, '-');
         try {
           await unlink(filePath);

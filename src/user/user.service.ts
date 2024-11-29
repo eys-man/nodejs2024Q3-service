@@ -3,6 +3,7 @@ import {
   CreateUserDto,
   PartialUserDto,
   UpdatePasswordDto,
+  UserDto,
 } from './dto/users.dto';
 import { validate } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -62,6 +63,14 @@ export class UserService {
     };
 
     return partialUser; // без пароля
+  }
+
+  async getUserByLogin(searchLogin: string): Promise<UserDto> {
+    // поиск пользователя
+    const user = await this.usersRepo.findOneBy({ login: searchLogin });
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    return user; // с паролем
   }
 
   async updateUser(
