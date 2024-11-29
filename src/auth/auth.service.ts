@@ -76,7 +76,7 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string): Promise<string> {
+  async refresh(refreshToken: string) {
     if (!refreshToken)
       throw new HttpException('No refresh token provided', HttpStatus.UNAUTHORIZED);
 
@@ -85,17 +85,29 @@ export class AuthService {
         secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
       });
 
-      return await this.jwtService.signAsync(
-        { userId: payload.id, login: payload.login },
-        {
-          secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
-          expiresIn: this.configService.get('TOKEN_REFRESH_EXPIRE_TIME'),
-        },
-      )
+      return {
+        id: payload.login,
+        login: payload.login,
+        accessToken: await this.jwtService.signAsync(
+          { userId: payload.id, login: payload.login },
+          {
+            secret: this.configService.get('JWT_SECRET_KEY'),
+            expiresIn: this.configService.get('TOKEN_EXPIRE_TIME'),
+          },
+        ),
+        refreshToken: await this.jwtService.signAsync(
+          { userId: payload.id, login: payload.login },
+          {
+            secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
+            expiresIn: this.configService.get('TOKEN_REFRESH_EXPIRE_TIME'),
+          },
+        ),
+      };
     } catch (error) {
       if (error instanceof TokenExpiredError)
         throw new HttpException('Refresh token has expired', StatusCodes.FORBIDDEN);
       throw new HttpException('Invalid refresh token', StatusCodes.FORBIDDEN);
     }
+
   }
 }
