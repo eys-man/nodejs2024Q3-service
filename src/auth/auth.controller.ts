@@ -22,7 +22,6 @@ export class AuthController {
     return await this.authService.login(user);
   }
 
-  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() refreshToken: string) {

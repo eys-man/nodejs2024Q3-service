@@ -12,7 +12,7 @@ export class LoggingMiddleware implements NestMiddleware {
     res.on('finish', async () => {
       const { statusCode } = res;
 
-      const message = `[${method}] URL: ${originalUrl}:: ${statusCode} --- [Query: ${JSON.stringify(query)} :: Body: ${JSON.stringify(body)}]`;
+      const message = `[${method}] URL: ${originalUrl} -- Status Code: ${statusCode} -- [Query: ${JSON.stringify(query)} :: Body: ${JSON.stringify(body)}]`;
 
       if (statusCode >= 500)
         await this.logger.error(message);

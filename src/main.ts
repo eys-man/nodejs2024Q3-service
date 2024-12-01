@@ -25,7 +25,7 @@ async function bootstrap() {
   });
 
   process.on('unhandledRejection', async (reason) => {
-    loggingService.error(`Unhandled Rejection: ${JSON.stringify(reason)}`);
+    await loggingService.error(`Unhandled Rejection: ${JSON.stringify(reason)}`);
     console.error('Unhandled Rejection:', reason);
 
     await app.close();
