@@ -15,10 +15,10 @@ export class LoggingService implements LoggerService {
   private timeStamp: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.logLevel = Number(process.env.LOGS_LEVEL);
-    this.maxFileSize = Number(process.env.MAX_FILE_SIZE);
+    this.logLevel = this.configService.get('LOGS_LEVEL', 2);
+    this.maxFileSize = this.configService.get('MAX_FILE_SIZE', 1024);
     this.timeStamp = new Date().toISOString().replace(/[:.]/g, '-');
-    this.logsDirectory = resolve( process.env.LOGS_DIRECTORY );
+    this.logsDirectory = resolve( this.configService.get('LOGS_DIRECTORY') );
   }
 
   async error(message: string) {
