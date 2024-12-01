@@ -12,7 +12,8 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private usersRepo: Repository<User>) {}
+  constructor(@InjectRepository(User)
+  protected readonly usersRepo: Repository<User>) {}
 
   async createUser(newUser: CreateUserDto): Promise<PartialUserDto> {
     if (

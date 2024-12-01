@@ -42,6 +42,7 @@ services:
     restart: always
     networks:
       - home-library
+    command: postgres -c port=${POSTGRES_INTERNAL_PORT} -c logging_collector=on -c log_destination=stderr -c log_directory=/logs -c log_statement=all
 
 volumes:
   data:
